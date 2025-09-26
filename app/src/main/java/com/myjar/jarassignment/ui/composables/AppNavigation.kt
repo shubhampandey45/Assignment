@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -61,7 +63,8 @@ fun ItemListScreen(
     //navigate: MutableState<String>,
     navController: NavHostController
 ) {
-    val items = viewModel.listStringData.collectAsState()
+    val items = viewModel.filterItems.collectAsState()
+    val searchQuery = viewModel.searchQuery.collectAsState()
 
 //    if (navigate.value.isNotBlank()) {
 //        val currRoute = navController.currentDestination?.route.orEmpty()
@@ -69,19 +72,33 @@ fun ItemListScreen(
 //            navController.navigate("item_detail/${navigate.value}")
 //        }
 //    }
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
+
+    Column(
+        modifier = Modifier.fillMaxSize()
     ) {
-        items(items.value) { item ->
-            ItemCard(
-                item = item,
-                onClick = { navController.navigate("item_detail/${item.id}") }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = searchQuery.value,
+            onValueChange = viewModel::searchQueryChange,
+            label = {"Search"},
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        )
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            items(items.value) { item ->
+                ItemCard(
+                    item = item,
+                    onClick = { navController.navigate("item_detail/${item.id}") }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
     }
+
 }
 
 @Composable
