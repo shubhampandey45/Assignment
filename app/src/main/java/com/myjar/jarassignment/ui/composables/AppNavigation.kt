@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -32,20 +33,23 @@ fun AppNavigation(
     viewModel: JarViewModel,
 ) {
     val navController = rememberNavController()
-    val navigate = remember { mutableStateOf<String>("") }
+    // val navigate = remember { mutableStateOf<String>("") }
 
     NavHost(modifier = modifier, navController = navController, startDestination = "item_list") {
         composable("item_list") {
             ItemListScreen(
                 viewModel = viewModel,
-                onNavigateToDetail = { selectedItem -> navigate.value = selectedItem },
-                navigate = navigate,
+                // onNavigateToDetail = { selectedItem -> navigate.value = selectedItem },
+                // navigate = navigate,
                 navController = navController
             )
         }
         composable("item_detail/{itemId}") { backStackEntry ->
             val itemId = backStackEntry.arguments?.getString("itemId")
-            ItemDetailScreen(itemId = itemId)
+            ItemDetailScreen(
+                itemId = itemId,
+                viewModel = viewModel
+            )
         }
     }
 }
@@ -53,18 +57,18 @@ fun AppNavigation(
 @Composable
 fun ItemListScreen(
     viewModel: JarViewModel,
-    onNavigateToDetail: (String) -> Unit,
-    navigate: MutableState<String>,
+    //onNavigateToDetail: (String) -> Unit,
+    //navigate: MutableState<String>,
     navController: NavHostController
 ) {
     val items = viewModel.listStringData.collectAsState()
 
-    if (navigate.value.isNotBlank()) {
-        val currRoute = navController.currentDestination?.route.orEmpty()
-        if (!currRoute.contains("item_detail")) {
-            navController.navigate("item_detail/${navigate.value}")
-        }
-    }
+//    if (navigate.value.isNotBlank()) {
+//        val currRoute = navController.currentDestination?.route.orEmpty()
+//        if (!currRoute.contains("item_detail")) {
+//            navController.navigate("item_detail/${navigate.value}")
+//        }
+//    }
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -73,7 +77,7 @@ fun ItemListScreen(
         items(items.value) { item ->
             ItemCard(
                 item = item,
-                onClick = { onNavigateToDetail(item.id) }
+                onClick = { navController.navigate("item_detail/${item.id}") }
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -88,16 +92,41 @@ fun ItemCard(item: ComputerItem, onClick: () -> Unit) {
             .padding(8.dp)
             .clickable { onClick() }
     ) {
-        Text(text = item.name, fontWeight = FontWeight.Bold, color = Color.Transparent)
+        Text(
+            text = item.name,
+            fontWeight = FontWeight.Bold,
+            // color = Color.Transparent
+        )
+
+        item.data?.let{ data->
+            if(data.color != null) Text(text = "Color: ${data.color}")
+            if(data.capacity != null) Text(text = "Capacity: ${data.capacity}")
+            if(data.price != null) Text(text = "Price: ${data.price}")
+            if(data.capacityGB != null) Text(text = "Capacity GB: ${data.capacityGB}")
+            if(data.description != null) Text(text = "Description: ${data.description}")
+            if(data.screenSize != null) Text(text = "Screen Size: ${data.screenSize}")
+        }
     }
 }
 
 @Composable
-fun ItemDetailScreen(itemId: String?) {
+fun ItemDetailScreen(
+    itemId: String?,
+    viewModel: JarViewModel
+) {
     // Fetch the item details based on the itemId
     // Here, you can fetch it from the ViewModel or repository
+
+    val item = viewModel.itemDetail.collectAsState()
+
+    LaunchedEffect(itemId) {
+        if(itemId != null){
+            viewModel.fetchItemDetail(itemId)
+        }
+    }
+
     Text(
-        text = "Item Details for ID: $itemId",
+        text = "Item Details for ID: ${item.value?.id}",
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)

@@ -7,12 +7,20 @@ import kotlinx.coroutines.flow.flow
 
 interface JarRepository {
     suspend fun fetchResults(): Flow<List<ComputerItem>>
+
+    suspend fun fetchResultById(id: String): Flow<ComputerItem>
 }
 
 class JarRepositoryImpl(
     private val apiService: ApiService
 ) : JarRepository {
     override suspend fun fetchResults(): Flow<List<ComputerItem>> = flow {
-        apiService.fetchResults()
+        val result = apiService.fetchResults()
+        emit(result)
+    }
+
+    override suspend fun fetchResultById(id: String): Flow<ComputerItem> = flow {
+        val result = apiService.fetchResultById(id)
+        emit(result)
     }
 }
